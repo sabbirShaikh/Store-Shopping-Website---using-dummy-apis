@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import SingleProduct from "./SingleProduct";
 import useCartContext from "../cart-context/CartContext";
 import { FaSearch, FaFilter, FaStar, FaTimes } from "react-icons/fa";
+import ProductSkeleton from "./ProductSkeleton";
 
 function Products() {
   const [products, setProducts] = useState([]);
@@ -9,10 +10,12 @@ function Products() {
   const [searchInp, setSearchInp] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedRating, setSelectedRating] = useState("all");
+  const [loading, setLoading] = useState(true);
   const { cart, setCart } = useCartContext();
 
   useEffect(() => {
     async function fetchProducts() {
+      setLoading(true);
       try {
         const res = await fetch("https://dummyjson.com/products");
         const data = await res.json();
@@ -20,6 +23,8 @@ function Products() {
         setFilterProd(data.products);
       } catch (error) {
         console.log(error.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchProducts();
@@ -88,8 +93,8 @@ function Products() {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-zinc-200 mb-12 flex flex-col lg:flex-row gap-6 items-center">
-          <div className="relative w-full lg:flex-1 flex gap-2">
+        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-zinc-200 mb-12 flex flex-col lg:flex-row gap-4 items-center">
+          <div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
@@ -98,33 +103,36 @@ function Products() {
                 onKeyDown={(e) => e.key === "Enter" && searchProduct()}
                 value={searchInp}
                 placeholder="Search products..."
-                className="w-full bg-zinc-50 border-none py-4 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-orange-500/20 transition-all text-zinc-800 font-medium"
+                className="w-full bg-zinc-50 border-none py-3 md:py-4 pl-12 pr-4 rounded-2xl focus:ring-2 focus:ring-orange-500/20 transition-all text-zinc-800 font-medium text-sm md:text-base"
               />
             </div>
 
-            <button
-              onClick={clearAllFilters}
-              className="px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-2xl transition-colors flex items-center gap-2 font-bold text-sm whitespace-nowrap"
-            >
-              <FaTimes size={12} />
-              Clear Filters
-            </button>
+            <div className="flex gap-2 h-12 sm:h-auto">
+              <button
+                onClick={clearAllFilters}
+                className="flex-1 sm:flex-none px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-2xl transition-colors flex items-center justify-center gap-2 font-bold text-xs md:text-sm whitespace-nowrap"
+              >
+                <FaTimes size={12} />
+                <span className="hidden xs:block">Clear Filters</span>
+                <span className="xs:hidden">Clear</span>
+              </button>
 
-            <button
-              className="px-8 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-colors"
-              onClick={searchProduct}
-            >
-              Search
-            </button>
+              <button
+                className="flex-1 sm:flex-none px-8 bg-zinc-900 hover:bg-black text-white font-bold rounded-2xl transition-colors text-sm"
+                onClick={searchProduct}
+              >
+                Search
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-            <div className="flex items-center gap-3 bg-zinc-50 px-4 py-2 rounded-2xl border border-zinc-100 flex-1 lg:flex-none">
-              <FaFilter className="text-zinc-400 text-xs" />
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-3 bg-zinc-50 px-4 py-2 rounded-2xl border border-zinc-100 w-full sm:flex-1 lg:w-48">
+              <FaFilter className="text-zinc-400 text-xs shrink-0" />
               <select
                 value={selectedCategory}
                 onChange={filterCategory}
-                className="bg-transparent border-none text-sm font-bold text-zinc-700 focus:ring-0 cursor-pointer py-2 pr-8"
+                className="bg-transparent border-none text-sm font-bold text-zinc-700 focus:ring-0 cursor-pointer py-2 w-full outline-none"
               >
                 <option value={"all"}>All Categories</option>
                 {products
@@ -140,11 +148,11 @@ function Products() {
               </select>
             </div>
 
-            <div className="flex items-center gap-3 bg-zinc-50 px-4 py-2 rounded-2xl border border-zinc-100 flex-1 lg:flex-none">
-              <FaStar className="text-orange-400 text-xs" />
+            <div className="flex items-center gap-3 bg-zinc-50 px-4 py-2 rounded-2xl border border-zinc-100 w-full sm:flex-1 lg:w-44">
+              <FaStar className="text-orange-400 text-xs shrink-0" />
               <select
                 value={selectedRating}
-                className="bg-transparent border-none text-sm font-bold text-zinc-700 focus:ring-0 cursor-pointer py-2 pr-8"
+                className="bg-transparent border-none text-sm font-bold text-zinc-700 focus:ring-0 cursor-pointer py-2 w-full outline-none"
                 onChange={filterRating}
               >
                 <option value={"all"}>Any Rating</option>
@@ -157,7 +165,13 @@ function Products() {
           </div>
         </div>
 
-        {filterProd.length > 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ProductSkeleton key={index} />
+            ))}
+          </div>
+        ) : filterProd.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filterProd.map((product) => (
               <SingleProduct
